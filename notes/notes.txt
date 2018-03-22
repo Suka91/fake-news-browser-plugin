@@ -1,0 +1,30 @@
+atributi:
+**** bag of words (n-grams)
+**** shallow syntax - Probabilistic Context Free Grammar (PCFG)
+---- affective dimensions (sentiment analysis / emotions)
+**** misspelled words
+**** punctuation
+**** average	sentence length and average word length
+**** capitalized words
+---- first person, second person, third person pronouns
+
+
+scores:
+-------------
+bow
+
+Begin fit SVM
+Begin cross val
+[ 0.94295302  0.94630872  0.90604027  0.90540541  0.92905405]
+Begin predict
+End
+0.967611336032
+-------------
+bow + capitalized_word
+
+Begin fit SVM
+Begin cross val
+[ 0.94966443  0.95302013  0.91610738  0.90540541  0.93581081]
+Begin predict
+End
+0.96963562753

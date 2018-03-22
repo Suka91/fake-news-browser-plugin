@@ -1,0 +1,63 @@
+bow
+shallow_syntax
+misspelled_words
+punctation
+sentence
+capitalized_words
+bow shallow_syntax
+bow misspelled_words
+bow punctation
+bow sentence
+bow capitalized_words
+shallow_syntax misspelled_words
+shallow_syntax punctation
+shallow_syntax sentence
+shallow_syntax capitalized_words
+misspelled_words punctation
+misspelled_words sentence
+misspelled_words capitalized_words
+punctation sentence
+punctation capitalized_words
+sentence capitalized_words
+bow shallow_syntax misspelled_words
+bow shallow_syntax punctation
+bow shallow_syntax sentence
+bow shallow_syntax capitalized_words
+bow misspelled_words punctation
+bow misspelled_words sentence
+bow misspelled_words capitalized_words
+bow punctation sentence
+bow punctation capitalized_words
+bow sentence capitalized_words
+shallow_syntax misspelled_words punctation
+shallow_syntax misspelled_words sentence
+shallow_syntax misspelled_words capitalized_words
+shallow_syntax punctation sentence
+shallow_syntax punctation capitalized_words
+shallow_syntax sentence capitalized_words
+misspelled_words punctation sentence
+misspelled_words punctation capitalized_words
+misspelled_words sentence capitalized_words
+punctation sentence capitalized_words
+bow shallow_syntax misspelled_words punctation
+bow shallow_syntax misspelled_words sentence
+bow shallow_syntax misspelled_words capitalized_words
+bow shallow_syntax punctation sentence
+bow shallow_syntax punctation capitalized_words
+bow shallow_syntax sentence capitalized_words
+bow misspelled_words punctation sentence
+bow misspelled_words punctation capitalized_words
+bow misspelled_words sentence capitalized_words
+bow punctation sentence capitalized_words
+shallow_syntax misspelled_words punctation sentence
+shallow_syntax misspelled_words punctation capitalized_words
+shallow_syntax misspelled_words sentence capitalized_words
+shallow_syntax punctation sentence capitalized_words
+misspelled_words punctation sentence capitalized_words
+bow shallow_syntax misspelled_words punctation sentence
+bow shallow_syntax misspelled_words punctation capitalized_words
+bow shallow_syntax misspelled_words sentence capitalized_words
+bow shallow_syntax punctation sentence capitalized_words
+bow misspelled_words punctation sentence capitalized_words
+shallow_syntax misspelled_words punctation sentence capitalized_words
+bow shallow_syntax misspelled_words punctation sentence capitalized_words

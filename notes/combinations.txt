@@ -1,0 +1,83 @@
+**** bag of words (n-grams)
+**** shallow syntax - Probabilistic Context Free Grammar (PCFG)
+**** misspelled words
+**** punctuation
+**** average	sentence length and average word length
+**** capitalized words
+
+##########
+2
+
+bow shallow_syntax
+bow misspelled_words
+bow punctation
+bow sent
+bow capitalized_words
+shallow_syntax misspelled_words
+shallow_syntax punctation
+shallow_syntax sent
+shallow_syntax capitalized_words
+misspelled_words punctation
+misspelled_words sent
+misspelled_words capitalized_words
+punctation sent
+punctation capitalized_words
+sent capitalized_words
+
+###########
+3
+
+bow shallow_syntax misspelled_words
+bow shallow_syntax punctation
+bow shallow_syntax sent
+bow shallow_syntax capitalized_words
+bow misspelled_words punctation
+bow misspelled_words sent
+bow misspelled_words capitalized_words
+bow punctation sent
+bow punctation capitalized_words
+bow sent capitalized_words
+shallow_syntax misspelled_words punctation
+shallow_syntax misspelled_words sent
+shallow_syntax misspelled_words capitalized_words
+shallow_syntax punctation sent
+shallow_syntax punctation capitalized_words
+shallow_syntax sent capitalized_words
+misspelled_words punctation sent
+misspelled_words punctation capitalized_words
+misspelled_words sent capitalized_words
+punctation sent capitalized_words
+
+############
+4
+
+bow shallow_syntax misspelled_words punctation
+bow shallow_syntax misspelled_words sent
+bow shallow_syntax misspelled_words capitalized_words
+bow shallow_syntax punctation sent
+bow shallow_syntax punctation capitalized_words
+bow shallow_syntax sent capitalized_words
+bow misspelled_words punctation sent
+bow misspelled_words punctation capitalized_words
+bow misspelled_words sent capitalized_words
+bow punctation sent capitalized_words
+shallow_syntax misspelled_words punctation sent
+shallow_syntax misspelled_words punctation capitalized_words
+shallow_syntax misspelled_words sent capitalized_words
+shallow_syntax punctation sent capitalized_words
+misspelled_words punctation sent capitalized_words
+
+############
+5
+
+bow shallow_syntax misspelled_words punctation sent
+bow shallow_syntax misspelled_words punctation capitalized_words
+bow shallow_syntax misspelled_words sent capitalized_words
+bow shallow_syntax punctation sent capitalized_words
+bow misspelled_words punctation sent capitalized_words
+shallow_syntax misspelled_words punctation sent capitalized_words
+
+############
+6
+
+bow shallow_syntax misspelled_words punctation sent capitalized_words
