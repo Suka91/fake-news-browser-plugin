@@ -1,91 +1,8 @@
-from generators import BagOfWords, Punctations, SpellCheck, AverageLength, CapitalizedWords, ShallowSyntax
-from sklearn import svm
 import pandas as pd
 import os
-from sklearn import svm
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import cross_val_score
 import random
+from FeatureWrapper import FeatureWrapper
 
-class FeatureWrapper:
-    def __init__(self, train_data, test_data):
-        self.train_data = train_data
-        self.test_data = test_data
-        
-        self.ss_train = ShallowSyntax(train_data['text'])
-        self.sent_train = AverageLength(train_data['text'])
-        self.bow_train = BagOfWords(train_data['text'])
-        self.punc_train = Punctations(train_data['text'])
-        self.ms_train = SpellCheck(train_data['text'])
-        self.cw_train = CapitalizedWords(train_data['text'])
-
-        self.ss_test = ShallowSyntax(test_data['text'])
-        self.sent_test = AverageLength(test_data['text'])
-        self.bow_test = BagOfWords(test_data['text'])
-        self.punc_test = Punctations(test_data['text'])
-        self.ms_test = SpellCheck(test_data['text'])
-        self.cw_test = CapitalizedWords(test_data['text'])
-
-    def Score(self,commandsFile,outFile=None):
-        out_string = ""
-        new_features_train = pd.DataFrame()
-        new_features_test = pd.DataFrame()
-        with open(commandsFile,'r') as f:
-            content = f.readlines()
-        content = [x.strip() for x in content]
-        for commands in content:
-            new_features_train = None
-            new_features_test = None
-            title_string = ""
-            score_string = ""
-
-            commands_split = commands.split()
-
-            print(commands_split)
-            for command in commands_split:
-                title_string += command + " "
-                if(command == 'bow'):
-                    new_features_train = pd.concat([new_features_train,pd.DataFrame(self.bow_train.data_features)], axis=1)
-                    new_features_test = pd.concat([new_features_test,pd.DataFrame(self.bow_test.data_features)], axis=1)
-                elif(command == 'shallow_syntax'):
-                    new_features_train = pd.concat([new_features_train,pd.DataFrame(self.ss_train.shallow_syntax_features)], axis=1)
-                    new_features_test = pd.concat([new_features_test,pd.DataFrame(self.ss_test.shallow_syntax_features)], axis=1)
-                elif(command == 'misspelled_words'):
-                    new_features_train = pd.concat([new_features_train,pd.DataFrame(self.ms_train.misspelled_freq)], axis=1)
-                    new_features_test = pd.concat([new_features_test,pd.DataFrame(self.ms_test.misspelled_freq)], axis=1)
-                elif(command == 'punctation'):
-                    new_features_train = pd.concat([new_features_train,pd.DataFrame(self.punc_train.punctuation_freq)], axis=1)
-                    new_features_test = pd.concat([new_features_test,pd.DataFrame(self.punc_test.punctuation_freq)], axis=1)
-                elif(command == 'sentence'):
-                    new_features_train = pd.concat([new_features_train,pd.DataFrame(self.sent_train.average_word_len),pd.DataFrame(self.sent_train.average_sentence_len)], axis=1)
-                    new_features_test = pd.concat([new_features_test,pd.DataFrame(self.sent_test.average_word_len),pd.DataFrame(self.sent_test.average_sentence_len)], axis=1)
-                elif(command == 'capitalized_words'):
-                    new_features_train = pd.concat([new_features_train,pd.DataFrame(self.cw_train.capitalized_words_freq)], axis=1)
-                    new_features_test = pd.concat([new_features_test,pd.DataFrame(self.cw_test.capitalized_words_freq)], axis=1)
-                else:
-                    print("Unkown command: ",command)
-
-            print("Begin fit SVM")
-            clf = svm.SVC()
-            clf.fit(new_features_train, self.train_data['type'])
-            print("Begin cross val")
-            scores = cross_val_score(clf, new_features_test, self.test_data['type'], cv=5)
-            print(scores)
-            print("Begin predict")
-            predicted = clf.predict(new_features_train)
-            print("End")
-            acc_score = accuracy_score(self.train_data['type'], predicted)
-            print(str(acc_score))
-            print(title_string)
-            score_string = str(scores) + "\n" + str(acc_score) + "\n"
-            print(score_string)
-            out_string += "-----------------\n"
-            out_string += title_string + "\n"
-            out_string += score_string + "\n"
-            out_string += "-----------------\n"
-        if outFile is not None:
-            with open(outFile,'w') as f:
-                f.write(out_string)
 
 
 def readArticles(path):
@@ -93,8 +10,10 @@ def readArticles(path):
     i = 0
     for dirName, subdirList, fileList in os.walk(path):
         for file in fileList:
-            with open(dirName+"/"+file, 'r') as f:
-                articles.append(f.read())
+            with open(dirName+"/"+file, 'rb') as f:
+                temp = f.read()
+                articles.append(temp)
+                i = i + 1
     return articles
 
 random.seed(42)
@@ -121,8 +40,11 @@ new_data = data_false.tail(743)
 new_data = new_data[['text','type']]
 test_data = new_data.append(df_data_true.tail(743), ignore_index=True)
 
-features = FeatureWrapper(train_data,test_data)
-features.Score("../data/commands.txt","output.txt")
+features = FeatureWrapper()
+features.ScoreModel(train_data, test_data, "../data/commands.txt",outFile="../saved_models/output.txt",saveModelPath="../saved_models",pcaOutputPath="../saved_models/pca.pickle",transformerOutputPath="../saved_models/tfidf.pickle")
+
+
+
 # ss_train = ShallowSyntax(train_data['text'])
 # sent_train = AverageLength(train_data['text'])
 # bow_train = BagOfWords(train_data['text'])
@@ -132,7 +54,7 @@ features.Score("../data/commands.txt","output.txt")
 #
 # ss_test = ShallowSyntax(test_data['text'])
 # sent_test = AverageLength(test_data['text'])
-# bow_test = BagOfWords(test_data['text'])
+# bow_test = BagOfWords(test_data['text'])/
 # punc_test = Punctations(test_data['text'])
 # ms_test = SpellCheck(test_data['text'])
 # cw_test = CapitalizedWords(test_data['text'])

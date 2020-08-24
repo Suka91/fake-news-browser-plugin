@@ -2,14 +2,17 @@ import nltk
 from sklearn.feature_extraction.text import CountVectorizer
 import re
 from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
 import string
 import pandas as pd
 import numpy as np
 import enchant
 from sklearn.decomposition import PCA
+import pickle
 
 class BagOfWords:
-    def __init__(self, data):
+    def transformData(self, data, trainModel=False, transformerOutputPath = None):
+        self.loadNltk()
         num_texts = data.size
         clean_train_texts = []
 
@@ -18,6 +21,7 @@ class BagOfWords:
                 print("BagOfWords: Processed ", i, "/", num_texts)
             clean_train_texts.append(self.textToWords(data[i]))
 
+        '''
         vectorizer = CountVectorizer(analyzer="word", \
                                      tokenizer=None, \
                                      preprocessor=None, \
@@ -26,18 +30,45 @@ class BagOfWords:
                                      max_df=0.95, min_df=2, \
                                      ngram_range=(1, 2)
                                      )
+        '''
+        if(trainModel == True):
+            vectorizer = TfidfVectorizer(analyzer='word',
+                                         sublinear_tf=True,
+                                         strip_accents='unicode',
+                                         ngram_range=(1, 2),
+                                         max_df=0.95, min_df=2,
+                                         max_features=3000)
+            tfidf = vectorizer.fit(clean_train_texts)
+            if(transformerOutputPath is not None):
+                pickle.dump(tfidf, open(transformerOutputPath, "wb"))
+            data_features = vectorizer.transform(clean_train_texts).toarray()
 
-        data_features = vectorizer.fit_transform(clean_train_texts).toarray()
+            self.vectorizer = vectorizer
+        else:
+            data_features = self.vectorizer.transform(clean_train_texts).toarray()
 
         self.data_features = data_features
-        self.vectorizer = vectorizer
-        self.feature_names = vectorizer.get_feature_names()
-
+        self.feature_names = self.vectorizer.get_feature_names()
+    '''
         tfidf_transformer = TfidfTransformer()
         data_features_tfidf = tfidf_transformer.fit_transform(data_features).toarray()
 
         self.tfidf_transformer = tfidf_transformer
         self.data_features_tfidf = data_features_tfidf
+    '''
+    def transformText(self, textData, transformerOutputPath):
+        self.loadNltk()
+        num_texts = textData.size
+        clean_text = []
+        for i in range(0, num_texts):
+            if (i % 500 == 0):
+                print("BagOfWords: Processed ", i, "/", num_texts)
+            clean_text.append(self.textToWords(textData[i]))
+
+
+        # tfidf.pickle
+        tfidf_vectorizer = pickle.load(open(transformerOutputPath, "rb"))
+        self.data_features = tfidf_vectorizer.transform(clean_text).toarray()
 
     def textToWords(self,inputString):
         letters_only = re.sub("[^a-zA-Z]", " ", str(inputString))
@@ -46,8 +77,14 @@ class BagOfWords:
         meaningful_words = [w for w in words if not w in stops]
         return (" ".join(meaningful_words))
 
+    def loadNltk(self):
+        try:
+            nltk.data.find('help/stopwords')
+        except LookupError:
+            nltk.download('stopwords')
+
 class Punctations:
-    def __init__(self, data):
+    def transformData(self, data):
         num_texts = data.size
         punctuation_freq = []
         count = lambda l1, l2: sum([1 for x in l1 if x in l2])
@@ -58,7 +95,7 @@ class Punctations:
         self.punctuation_freq = pd.DataFrame(np.array(punctuation_freq),columns=['punctuation_frequency'])
 
 class SpellCheck:
-    def __init__(self, data):
+    def transformData(self, data):
         num_texts = data.size
         misspelled_freq = []
         d = enchant.Dict("en_US")
@@ -76,7 +113,7 @@ class SpellCheck:
         self.misspelled_freq = pd.DataFrame(np.array(misspelled_freq), columns=['misspelled_freq'])
 
 class AverageLength:
-    def __init__(self, data):
+    def transformData(self, data):
         num_texts = data.size
         avg_sent_len = []
         avg_word_len = []
@@ -98,7 +135,7 @@ class AverageLength:
         self.average_sentence_len = pd.DataFrame(np.array(avg_sent_len), columns=['average_sentence_len'])
 
 class CapitalizedWords:
-    def __init__(self, data):
+    def transformData(self, data):
         cap_freq = []
         num_texts = data.size
         for i in range(0, num_texts):
@@ -114,7 +151,8 @@ class CapitalizedWords:
         self.capitalized_words_freq = pd.DataFrame(np.array(cap_freq), columns=['capitalized_words_freq'])
 
 class ShallowSyntax:
-    def __init__(self, data):
+    def transformData(self, data, trainModel=False, pcaOutputPath = None):
+        self.loadNltk()
         num_texts = data.size
         columns = []
         tagdict = nltk.load('help/tagsets/upenn_tagset.pickle')
@@ -138,8 +176,61 @@ class ShallowSyntax:
                 if(key in tagdict.keys()):
                     new_row.set_value(i, key, 100*(value/tag_fd.N())**2)
             df = pd.concat([df,new_row])
-        pca = PCA(n_components=0.6,svd_solver='full')
-        pca.fit(df.values)
-        transformed_features = pca.transform(df.values)
+        if(trainModel == True):
+            pca = PCA(n_components=0.6,svd_solver='full')
+            pca.fit(df.values)
+            if(pcaOutputPath is not None):
+                #pca.pickle
+                pickle.dump(pca, open(pcaOutputPath, "wb"))
+            transformed_features = pca.transform(df.values)
+            self.pca = pca
+        else:
+            transformed_features = self.pca.transform(df.values)
+
         self.shallow_syntax_features = pd.DataFrame(transformed_features)
-        self.pca = pca
+
+    def transformText(self, textData, pcaModelPath):
+        self.loadNltk()
+        num_texts = textData.size
+        columns = []
+        tagdict = nltk.load('help/tagsets/upenn_tagset.pickle')
+        for key in tagdict.keys():
+            columns.append(str(key))
+
+        df = pd.DataFrame(columns=columns)
+
+        for i in range(0, num_texts):
+            if (i % 500 == 0):
+                print("ShallowSyntax: Processed ", i, "/", num_texts)
+
+            new_row = pd.DataFrame(index=[i], columns=columns)
+            for key in tagdict.keys():
+                new_row.set_value(i, key, 0)
+
+            text = nltk.tokenize.word_tokenize((str(textData[i]).replace(r'"(.*?)"', '')))
+            tagged_text = nltk.pos_tag(text)
+            tag_fd = nltk.FreqDist(tag for (word, tag) in tagged_text)
+            for (key, value) in tag_fd.items():
+                if (key in tagdict.keys()):
+                    new_row.set_value(i, key, 100 * (value / tag_fd.N()) ** 2)
+            df = pd.concat([df, new_row])
+
+        self.pca = pickle.load(open(pcaModelPath, "rb"))
+
+        transformed_features = self.pca.transform(df.values)
+
+        self.shallow_syntax_features = pd.DataFrame(transformed_features)
+
+    def loadNltk(self):
+        try:
+            nltk.data.find('help/tagsets')
+        except LookupError:
+            nltk.download('tagsets')
+        try:
+            nltk.data.find('help/punkt')
+        except LookupError:
+            nltk.download('punkt')
+        try:
+            nltk.data.find('help/averaged_perceptron_tagger')
+        except LookupError:
+            nltk.download('averaged_perceptron_tagger')

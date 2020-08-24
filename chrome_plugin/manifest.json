@@ -1,0 +1,29 @@
+{
+    "name": "Check Site Validity",
+    "version": "1.0",
+    "manifest_version": 2,
+
+    "icons": {
+        "128": "icon1.png"
+    },
+    "background": {
+        "scripts": ["jquery.min.js", "background.js"],
+	"persistent" : true
+    },
+
+    "content_scripts" : [
+        {
+            "matches" : ["<all_urls>"],
+            "js": ["ContentScript.js"],
+            "run_at": "document_end"
+        }
+    ],
+    "browser_action": {
+        "default_title": "Test title",
+        "default_popup": "popup.html"
+    },
+
+    "permissions": [
+        "*://*/*", "http://*/*", "https://*/*"
+    ]
+}

@@ -1,11 +1,18 @@
+import newspaper
 from newspaper import Article
 import pandas as pd
 data = pd.read_csv('../data/uci-news-aggregator.csv',sep=',')
 #while(1):
 #print(newspaper.popular_urls())
-#urls = newspaper.popular_urls()
+urls = newspaper.popular_urls()
 #urls = ['https://www.wsj.com/news/world/middle-east','http://wsj.com','http://nytimes.com','http://www.bbc.co.uk','http://www.npr.org','http://www.reuters.com','http://www.economist.com','http://www.pbs.org','http://bigstory.ap.org','http://cnn.com','http://www.ted.com','http://www.washingtonpost.com','http://www.newyorker.com','http://www.cbs.com']
-print(data.head(5))
+#print(data.head(5))
+url_test = "https://www.nytimes.com/2020/08/08/business/economy/lost-unemployment-benefits.html?action=click&module=Top%20Stories&pgtype=Homepage"
+article = Article(url_test)
+article.download()
+article.parse()
+print(article.text)
+exit()
 for row in data:
     try:
         first_article = Article(url=str(row['URL'], language='en'))

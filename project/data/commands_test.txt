@@ -1,2 +1,1 @@
 bow
-bow shallow_syntax
