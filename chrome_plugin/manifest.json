@@ -4,7 +4,7 @@
     "manifest_version": 2,
 
     "icons": {
-        "128": "icon1.png"
+        "38": "neutral.png"
     },
     "background": {
         "scripts": ["jquery.min.js", "background.js"],
@@ -19,8 +19,6 @@
         }
     ],
     "browser_action": {
-        "default_title": "Test title",
-        "default_popup": "popup.html"
     },
 
     "permissions": [

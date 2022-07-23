@@ -1,3 +1,8 @@
+https://www.kaggle.com/vikasukani/news-data-set-fake-news-with-python
+
+fake.csv https://www.kaggle.com/mrisdal/fake-news
+true https://www.kaggle.com/uciml/news-aggregator-dataset
+--------------------------------
 atributi:
 **** bag of words (n-grams)
 **** shallow syntax - Probabilistic Context Free Grammar (PCFG)

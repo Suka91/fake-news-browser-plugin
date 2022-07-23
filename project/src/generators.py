@@ -11,7 +11,7 @@ from sklearn.decomposition import PCA
 import pickle
 
 class BagOfWords:
-    def transformData(self, data, trainModel=False, transformerOutputPath = None):
+    def transformData(self, data, trainModel=True, transformerOutputPath = None):
         self.loadNltk()
         num_texts = data.size
         clean_train_texts = []
@@ -37,7 +37,7 @@ class BagOfWords:
                                          strip_accents='unicode',
                                          ngram_range=(1, 2),
                                          max_df=0.95, min_df=2,
-                                         max_features=3000)
+                                         max_features=1500)
             tfidf = vectorizer.fit(clean_train_texts)
             if(transformerOutputPath is not None):
                 pickle.dump(tfidf, open(transformerOutputPath, "wb"))
@@ -56,7 +56,7 @@ class BagOfWords:
         self.tfidf_transformer = tfidf_transformer
         self.data_features_tfidf = data_features_tfidf
     '''
-    def transformText(self, textData, transformerOutputPath):
+    def transformText(self, textData, transformerModelPath):
         self.loadNltk()
         num_texts = textData.size
         clean_text = []
@@ -67,8 +67,8 @@ class BagOfWords:
 
 
         # tfidf.pickle
-        tfidf_vectorizer = pickle.load(open(transformerOutputPath, "rb"))
-        self.data_features = tfidf_vectorizer.transform(clean_text).toarray()
+        self.vectorizer = pickle.load(open(transformerModelPath, "rb"))
+        self.data_features = self.vectorizer.transform(clean_text).toarray()
 
     def textToWords(self,inputString):
         letters_only = re.sub("[^a-zA-Z]", " ", str(inputString))
@@ -82,6 +82,10 @@ class BagOfWords:
             nltk.data.find('help/stopwords')
         except LookupError:
             nltk.download('stopwords')
+
+    def debugGenerator(self, transformerModelPath):
+        self.vectorizer = pickle.load(open(transformerModelPath, "rb"))
+        print(self.vectorizer.get_feature_names())
 
 class Punctations:
     def transformData(self, data):
@@ -122,6 +126,7 @@ class AverageLength:
                 print("AverageLength: Processed ", i, "/", num_texts)
             filtered = ''.join(filter(lambda x: x not in '".,;!-', str(data[i])))
             words = [word for word in filtered.split() if word]
+
             avg_word_len.append((sum(map(len, words)) / len(words))**2)
 
             sents = str(data[i]).split('.');
@@ -151,7 +156,7 @@ class CapitalizedWords:
         self.capitalized_words_freq = pd.DataFrame(np.array(cap_freq), columns=['capitalized_words_freq'])
 
 class ShallowSyntax:
-    def transformData(self, data, trainModel=False, pcaOutputPath = None):
+    def transformData(self, data, trainModel=True, pcaOutputPath = None):
         self.loadNltk()
         num_texts = data.size
         columns = []

@@ -2,12 +2,18 @@ chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         console.log("Entered background " + request.message + " " + request.type + " " + request.content);
 		if (request.message == "listeners" && request.type == "background") {
+			chrome.browserAction.setIcon({path: "neutral.png"});
 			$.ajax({
-				url: "http://127.0.0.1:5000/_get_data/",
+				url: "http://127.0.0.1:5000/_predict/",
 				type: "POST",
 				data: { arg1: request.content} ,
 				success: function(resp){
 				  console.log(resp);
+		                  if (resp.data[1] == "1") {
+				     chrome.browserAction.setIcon({path: "true.png"});
+				  } else {
+				     chrome.browserAction.setIcon({path: "false.png"});
+				  }
 				},
 				error: function(e, s, t) {
 				  console.log("ERROR OCCURRED");

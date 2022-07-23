@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import random
+import numpy as np
 from FeatureWrapper import FeatureWrapper
 
 
@@ -18,30 +19,53 @@ def readArticles(path):
 
 random.seed(42)
 
-data_true = readArticles("../data/bbc")
-random.shuffle(data_true)
-df_data_true = pd.DataFrame(data_true, columns=['text'])
+#Used to read BBC articles
+# data_true = readArticles("../data/bbc")
+# random.shuffle(data_true)
+# df_data_true = pd.DataFrame(data_true, columns=['text'])
+#
+# type_col = [1 for _ in range(0,len(df_data_true))]
+# df_data_true['type'] = type_col
+#------------------------
+#Used to read fake csv dataset
+# data_false = pd.read_csv("../data/fake.csv",sep=",")
+# random.shuffle(data_false.as_matrix())
+# data_false = pd.DataFrame(data_false)
+#
+# type_col = [0 for _ in range(0,len(data_false))]
+# data_false['type'] = type_col
+#------------------------
+#Create train data
+# new_data = data_false.head(2225)
+# new_data = new_data[['text','type']]
+# train_data = new_data.append(df_data_true.head(2225), ignore_index=True)
+#------------------------
+#Create test data
+# new_data = data_false.tail(743)
+# new_data = new_data[['text','type']]
+# test_data = new_data.append(df_data_true.tail(743), ignore_index=True)
+#------------------------
 
-data_false = pd.read_csv("../data/fake.csv",sep=",")
-random.shuffle(data_false.as_matrix())
-data_false = pd.DataFrame(data_false)
+data = pd.read_csv("../data/news_datasets.csv",sep=",")
 
-type_col = [0 for _ in range(0,len(data_false))]
-data_false['type'] = type_col
+data = data[['text','type']]
+data['text'] = data['text'].str.replace(r'^ *$', '')
+data['text'].replace("", np.nan, inplace=True)
+data.dropna(subset=['text'], inplace=True)
+data.reset_index(drop=True, inplace=True)
 
-type_col = [1 for _ in range(0,len(df_data_true))]
-df_data_true['type'] = type_col
+data.loc[data['type'] == 'FAKE', 'type'] = 0
+data.loc[data['type'] == 'REAL', 'type'] = 1
+data['type'] = data['type'].astype('int')
 
-new_data = data_false.head(1482)
-new_data = new_data[['text','type']]
-train_data = new_data.append(df_data_true.head(1482), ignore_index=True)
-
-new_data = data_false.tail(743)
-new_data = new_data[['text','type']]
-test_data = new_data.append(df_data_true.tail(743), ignore_index=True)
+test_data = None
 
 features = FeatureWrapper()
-features.ScoreModel(train_data, test_data, "../data/commands.txt",outFile="../saved_models/output.txt",saveModelPath="../saved_models",pcaOutputPath="../saved_models/pca.pickle",transformerOutputPath="../saved_models/tfidf.pickle")
+features.ScoreModel(data, test_data, "../data/commands.txt", useSVM=True, outFile="../saved_models_news_datasets_1_2_ngrams_1500_features/output.txt",saveModelPath="../saved_models_news_datasets_1_2_ngrams_1500_features",pcaOutputPath="../saved_models_news_datasets_1_2_ngrams_1500_features/pca.pickle",transformerOutputPath="../saved_models_news_datasets_1_2_ngrams_1500_features/tfidf.pickle")
+
+#features_lr = FeatureWrapper()
+#features_lr.ScoreModel(data, test_data, "../data/commands.txt", useSVM=False, outFile="../saved_models_logistic_regression/output_lr.txt")
+
 
 
 
