@@ -12,7 +12,7 @@ import pickle
 
 class BagOfWords:
     def transformData(self, data, trainModel=True, transformerOutputPath = None):
-        self.loadNltk()
+        #self.loadNltk()
         num_texts = data.size
         clean_train_texts = []
 
@@ -37,7 +37,7 @@ class BagOfWords:
                                          strip_accents='unicode',
                                          ngram_range=(1, 2),
                                          max_df=0.95, min_df=2,
-                                         max_features=1500)
+                                         max_features=3000)
             tfidf = vectorizer.fit(clean_train_texts)
             if(transformerOutputPath is not None):
                 pickle.dump(tfidf, open(transformerOutputPath, "wb"))
@@ -57,7 +57,7 @@ class BagOfWords:
         self.data_features_tfidf = data_features_tfidf
     '''
     def transformText(self, textData, transformerModelPath):
-        self.loadNltk()
+        #self.loadNltk()
         num_texts = textData.size
         clean_text = []
         for i in range(0, num_texts):
@@ -157,7 +157,7 @@ class CapitalizedWords:
 
 class ShallowSyntax:
     def transformData(self, data, trainModel=True, pcaOutputPath = None):
-        self.loadNltk()
+        #self.loadNltk()
         num_texts = data.size
         columns = []
         tagdict = nltk.load('help/tagsets/upenn_tagset.pickle')
@@ -195,7 +195,7 @@ class ShallowSyntax:
         self.shallow_syntax_features = pd.DataFrame(transformed_features)
 
     def transformText(self, textData, pcaModelPath):
-        self.loadNltk()
+        #self.loadNltk()
         num_texts = textData.size
         columns = []
         tagdict = nltk.load('help/tagsets/upenn_tagset.pickle')
