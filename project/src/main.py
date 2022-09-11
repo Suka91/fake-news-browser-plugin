@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import random
+import Consts
 import numpy as np
 from FeatureWrapper import FeatureWrapper
 from sklearn.model_selection import train_test_split
@@ -22,38 +23,39 @@ random.seed(42)
 print("Begin reading data..")
 
 #Used to read BBC articles
-data_true = readArticles("../data/bbc")
-random.shuffle(data_true)
-df_data_true = pd.DataFrame(data_true, columns=['text'])
-
-type_col = [1 for _ in range(0,len(df_data_true))]
-df_data_true['type'] = type_col
+# data_true = readArticles("../data/bbc")
+# random.shuffle(data_true)
+# df_data_true = pd.DataFrame(data_true, columns=['text'])
+#
+# type_col = [1 for _ in range(0,len(df_data_true))]
+# df_data_true['type'] = type_col
 #------------------------
 #Used to read fake csv dataset
-data_false = pd.read_csv("../data/fake.csv",sep=",")
-random.shuffle(data_false.as_matrix())
-data_false = pd.DataFrame(data_false)
-
-type_col = [0 for _ in range(0,len(data_false))]
-data_false['type'] = type_col
+# data_false = pd.read_csv("../data/fake.csv",sep=",")
+# random.shuffle(data_false.as_matrix())
+# data_false = pd.DataFrame(data_false)
+#
+# type_col = [0 for _ in range(0,len(data_false))]
+# data_false['type'] = type_col
 #------------------------
 #Create train data
-new_data = data_false.head(2225)
-new_data = new_data[['text','type']]
-data = new_data.append(df_data_true.head(2225), ignore_index=True)
+# new_data = data_false.head(2225)
+# new_data = new_data[['text','type']]
+# data = new_data.append(df_data_true.head(2225), ignore_index=True)
 #------------------------
 
-# data = pd.read_csv("../data/news_datasets.csv",sep=",")
-#
-# data = data[['text','type']]
-# data['text'] = data['text'].str.replace(r'^ *$', '')
-# data['text'].replace("", np.nan, inplace=True)
-# data.dropna(subset=['text'], inplace=True)
-# data.reset_index(drop=True, inplace=True)
-#
-# data.loc[data['type'] == 'FAKE', 'type'] = 0
-# data.loc[data['type'] == 'REAL', 'type'] = 1
-# data['type'] = data['type'].astype('int')
+data = pd.read_csv("../data/news_datasets.csv",sep=",", nrows = 100)
+
+data = data[['text','type']]
+data['text'] = data['text'].str.replace(r'^ *$', '')
+data['text'].replace("", np.nan, inplace=True)
+data.dropna(subset=['text'], inplace=True)
+data.reset_index(drop=True, inplace=True)
+
+data.loc[data['type'] == 'FAKE', 'type'] = 0
+data.loc[data['type'] == 'REAL', 'type'] = 1
+data['type'] = data['type'].astype('int')
+#------------------------
 
 print("Begin split data..")
 data_train, data_test = train_test_split(data, test_size=0.2, random_state=42, shuffle=True)
@@ -66,11 +68,18 @@ os.remove("train.csv")
 os.remove("test.csv")
 print("Begin creating model..")
 features = FeatureWrapper()
-features.ScoreModel(data_train, data_test, "../data/commands.txt", useSVM=True, outFile="../models/z_saved_models_1_2_ngrams_3000_features/output.txt",saveModelPath="../models/saved_models_news_datasets_1_2_ngrams_1000_features",pcaOutputPath="../models/saved_models_news_datasets_1_2_ngrams_1000_features/pca.pickle",transformerOutputPath="../models/saved_models_news_datasets_1_2_ngrams_1000_features/tfidf.pickle")
+features.ScoreModel(data_train, data_test, Consts.INPUT_COMMANDS_PATH,
+                    useSVM=True,
+                    outFile=Consts.OUTPUT_DIR_PATH + Consts.OUTPUT_FILE_PATH,
+                    saveModelPath=Consts.OUTPUT_DIR_PATH,
+                    pcaOutputPath=Consts.OUTPUT_DIR_PATH + Consts.PCA_PICKLE_PATH,
+                    transformerOutputPath=Consts.OUTPUT_DIR_PATH + Consts.TFIDF_PICKLE_PATH)
 
-features_lr = FeatureWrapper()
-features_lr.ScoreModel(data_train, data_test, "../data/commands.txt", useSVM=False, outFile="../models/z_saved_models_lr_1_2_ngrams_3000_features/output_lr1.txt")
+# features_lr = FeatureWrapper()
+# features_lr.ScoreModel(data_train, data_test, "../data/commands.txt", useSVM=False, outFile="../models/z_saved_models_lr_1_2_ngrams_3000_features/output_lr1.txt")
 
+# features = FeatureWrapper()
+# features.ScoreModelTest(data, Consts.INPUT_COMMANDS, Consts.INPUT_DIR_PATH, transformModelPath=Consts.INPUT_DIR_PATH + Consts.TFIDF_PICKLE_PATH)
 
 
 

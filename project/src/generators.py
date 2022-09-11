@@ -1,4 +1,5 @@
 import nltk
+import Consts
 from sklearn.feature_extraction.text import CountVectorizer
 import re
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -17,7 +18,7 @@ class BagOfWords:
         clean_train_texts = []
 
         for i in range(0, num_texts):
-            if (i % 500 == 0):
+            if (i % Consts.ITER_PRINT == 0):
                 print("BagOfWords: Processed ", i, "/", num_texts)
             clean_train_texts.append(self.textToWords(data[i]))
 
@@ -35,9 +36,9 @@ class BagOfWords:
             vectorizer = TfidfVectorizer(analyzer='word',
                                          sublinear_tf=True,
                                          strip_accents='unicode',
-                                         ngram_range=(1, 2),
-                                         max_df=0.95, min_df=2,
-                                         max_features=3000)
+                                         ngram_range=Consts.TFIDF_NGRAM_RANGE,
+                                         max_df=Consts.TFIDF_MAX_DF, min_df=Consts.TFIDF_MIN_DF,
+                                         max_features=Consts.TFIDF_MAX_FEATURES)
             tfidf = vectorizer.fit(clean_train_texts)
             if(transformerOutputPath is not None):
                 pickle.dump(tfidf, open(transformerOutputPath, "wb"))
@@ -49,19 +50,13 @@ class BagOfWords:
 
         self.data_features = data_features
         self.feature_names = self.vectorizer.get_feature_names()
-    '''
-        tfidf_transformer = TfidfTransformer()
-        data_features_tfidf = tfidf_transformer.fit_transform(data_features).toarray()
 
-        self.tfidf_transformer = tfidf_transformer
-        self.data_features_tfidf = data_features_tfidf
-    '''
     def transformText(self, textData, transformerModelPath):
         #self.loadNltk()
         num_texts = textData.size
         clean_text = []
         for i in range(0, num_texts):
-            if (i % 500 == 0):
+            if (i % Consts.ITER_PRINT == 0):
                 print("BagOfWords: Processed ", i, "/", num_texts)
             clean_text.append(self.textToWords(textData[i]))
 
@@ -93,9 +88,10 @@ class Punctations:
         punctuation_freq = []
         count = lambda l1, l2: sum([1 for x in l1 if x in l2])
         for i in range(0, num_texts):
-            if (i % 500 == 0):
+            if (i % Consts.ITER_PRINT == 0):
                 print("Punctations: Processed ", i, "/", num_texts)
-            punctuation_freq.append((500*(count(data[i], set(string.punctuation))/len(data[i])))**2)
+            text_punctuation_freq = count(data[i], set(string.punctuation))/len(data[i])
+            punctuation_freq.append(Consts.PC_MUL*text_punctuation_freq**Consts.PC_POW)
         self.punctuation_freq = pd.DataFrame(np.array(punctuation_freq),columns=['punctuation_frequency'])
 
 class SpellCheck:
@@ -104,13 +100,13 @@ class SpellCheck:
         misspelled_freq = []
         d = enchant.Dict("en_US")
         for i in range(0, num_texts):
-            if (i % 500 == 0):
+            if (i % Consts.ITER_PRINT == 0):
                 print("SpellCheck: Processed ", i, "/", num_texts)
             letters_only = re.sub("[^a-zA-Z]", " ", str(data[i]))
             words = letters_only.lower().split()
-            ms = sum([1 for x in words if d.check(x) is False])
-            if(ms != 0):
-                freq = (100*ms/len(words))**2
+            ms_count = sum([1 for x in words if d.check(x) is False])
+            if(ms_count != 0):
+                freq = (Consts.SC_MUL*ms_count/len(words))**Consts.SC_POW
             else:
                 freq = 0
             misspelled_freq.append(freq)
@@ -122,19 +118,18 @@ class AverageLength:
         avg_sent_len = []
         avg_word_len = []
         for i in range(0, num_texts):
-            if (i % 500 == 0):
+            if (i % Consts.ITER_PRINT == 0):
                 print("AverageLength: Processed ", i, "/", num_texts)
-            filtered = ''.join(filter(lambda x: x not in '".,;!-', str(data[i])))
+            filtered = ''.join(filter(lambda x: x not in Consts.PUNCT_MARKS, str(data[i])))
             words = [word for word in filtered.split() if word]
-
-            avg_word_len.append((sum(map(len, words)) / len(words))**2)
+            avg_word_len.append((sum(map(len, words)) / len(words))**Consts.AL_POW)
 
             sents = str(data[i]).split('.');
             filtered_sents = []
             for sent in sents:
-                sent = ''.join(filter(lambda x: x not in '".,;!-', sent))
+                sent = ''.join(filter(lambda x: x not in Consts.PUNCT_MARKS, sent))
                 filtered_sents.append(sent)
-            avg_sent_len.append((sum(map(len, filtered_sents)) / len(filtered_sents))**2)
+            avg_sent_len.append((sum(map(len, filtered_sents)) / len(filtered_sents))**Consts.AL_POW)
 
         self.average_word_len = pd.DataFrame(np.array(avg_word_len), columns=['average_word_len'])
         self.average_sentence_len = pd.DataFrame(np.array(avg_sent_len), columns=['average_sentence_len'])
@@ -144,20 +139,21 @@ class CapitalizedWords:
         cap_freq = []
         num_texts = data.size
         for i in range(0, num_texts):
-            if (i % 500 == 0):
+            if (i % Consts.ITER_PRINT == 0):
                 print("CapitalizedWords: Processed ", i, "/", num_texts)
-            filtered = ''.join(filter(lambda x: x not in '".,;!-', str(data[i])))
+            filtered = ''.join(filter(lambda x: x not in Consts.PUNCT_MARKS, str(data[i])))
             filtered = filtered.split()
-            freq = (100*len([word for word in filtered if word.isupper() and len(word)>4])/len(filtered))**2
+            freq = len([word for word in filtered if word.isupper() and len(word)>Consts.CW_MIN_WORD_LEN])/len(filtered)
             if(freq == 0):
-                freq = -1*len(filtered)*0.001
+                freq = Consts.CW_NEG_MUL*len(filtered)
+            else:
+                freq = Consts.CW_MUL * freq ** Consts.CW_POW
             cap_freq.append(freq)
 
         self.capitalized_words_freq = pd.DataFrame(np.array(cap_freq), columns=['capitalized_words_freq'])
 
 class ShallowSyntax:
     def transformData(self, data, trainModel=True, pcaOutputPath = None):
-        #self.loadNltk()
         num_texts = data.size
         columns = []
         tagdict = nltk.load('help/tagsets/upenn_tagset.pickle')
@@ -167,7 +163,7 @@ class ShallowSyntax:
         df = pd.DataFrame(columns=columns)
 
         for i in range(0, num_texts):
-            if (i % 500 == 0):
+            if (i % Consts.ITER_PRINT == 0):
                 print("ShallowSyntax: Processed ", i, "/", num_texts)
 
             new_row = pd.DataFrame(index = [i],columns = columns)
@@ -179,13 +175,12 @@ class ShallowSyntax:
             tag_fd = nltk.FreqDist(tag for (word, tag) in tagged_text)
             for (key,value) in tag_fd.items():
                 if(key in tagdict.keys()):
-                    new_row.set_value(i, key, 100*(value/tag_fd.N())**2)
+                    new_row.set_value(i, key, Consts.SS_MUL*(value/tag_fd.N())**Consts.SS_POW)
             df = pd.concat([df,new_row])
         if(trainModel == True):
-            pca = PCA(n_components=0.6,svd_solver='full')
+            pca = PCA(n_components=Consts.PCA_COMPONENTS,svd_solver='full')
             pca.fit(df.values)
             if(pcaOutputPath is not None):
-                #pca.pickle
                 pickle.dump(pca, open(pcaOutputPath, "wb"))
             transformed_features = pca.transform(df.values)
             self.pca = pca
@@ -205,7 +200,7 @@ class ShallowSyntax:
         df = pd.DataFrame(columns=columns)
 
         for i in range(0, num_texts):
-            if (i % 500 == 0):
+            if (i % Consts.ITER_PRINT == 0):
                 print("ShallowSyntax: Processed ", i, "/", num_texts)
 
             new_row = pd.DataFrame(index=[i], columns=columns)
@@ -217,7 +212,7 @@ class ShallowSyntax:
             tag_fd = nltk.FreqDist(tag for (word, tag) in tagged_text)
             for (key, value) in tag_fd.items():
                 if (key in tagdict.keys()):
-                    new_row.set_value(i, key, 100 * (value / tag_fd.N()) ** 2)
+                    new_row.set_value(i, key, Consts.SS_MUL * (value / tag_fd.N()) ** Consts.SS_POW)
             df = pd.concat([df, new_row])
 
         self.pca = pickle.load(open(pcaModelPath, "rb"))

@@ -1,5 +1,6 @@
 import copy
 import pandas as pd
+import Consts
 from generators import BagOfWords, Punctations, SpellCheck, AverageLength, CapitalizedWords, ShallowSyntax
 from sklearn import svm
 from sklearn.metrics import accuracy_score
@@ -68,37 +69,51 @@ class FeatureWrapper:
             print(commands_split)
             for command in commands_split:
                 title_string += command + " "
-                if (command == 'bow'):
-                    new_features_train = pd.concat([new_features_train, pd.DataFrame(bow_train_features)],
+                if (command == Consts.CM_BOW):
+                    new_features_train = pd.concat([new_features_train,
+                                                    pd.DataFrame(bow_train_features)],
                                                    axis=1)
 
-                    new_features_test = pd.concat([new_features_test, pd.DataFrame(bow_test_features)],
+                    new_features_test = pd.concat([new_features_test,
+                                                   pd.DataFrame(bow_test_features)],
                                                   axis=1)
-                elif (command == 'shallow_syntax'):
-                    new_features_train = pd.concat(
-                        [new_features_train, pd.DataFrame(ss_train_features)], axis=1)
-                    new_features_test = pd.concat(
-                        [new_features_test, pd.DataFrame(ss_test_features)], axis=1)
-                elif (command == 'misspelled_words'):
-                    new_features_train = pd.concat([new_features_train, pd.DataFrame(self.ms_train.misspelled_freq)],
+                elif (command ==  Consts.CM_SS):
+                    new_features_train = pd.concat([new_features_train,
+                                                    pd.DataFrame(ss_train_features)],
                                                    axis=1)
-                    new_features_test = pd.concat([new_features_test, pd.DataFrame(self.ms_test.misspelled_freq)],
+                    new_features_test = pd.concat([new_features_test,
+                                                   pd.DataFrame(ss_test_features)],
                                                   axis=1)
-                elif (command == 'punctation'):
-                    new_features_train = pd.concat([new_features_train, pd.DataFrame(self.punc_train.punctuation_freq)],
+                elif (command == Consts.CM_MW):
+                    new_features_train = pd.concat([new_features_train,
+                                                    pd.DataFrame(self.ms_train.misspelled_freq)],
                                                    axis=1)
-                    new_features_test = pd.concat([new_features_test, pd.DataFrame(self.punc_test.punctuation_freq)],
+                    new_features_test = pd.concat([new_features_test,
+                                                   pd.DataFrame(self.ms_test.misspelled_freq)],
                                                   axis=1)
-                elif (command == 'sentence'):
-                    new_features_train = pd.concat([new_features_train, pd.DataFrame(self.sent_train.average_word_len),
-                                                    pd.DataFrame(self.sent_train.average_sentence_len)], axis=1)
-                    new_features_test = pd.concat([new_features_test, pd.DataFrame(self.sent_test.average_word_len),
-                                                   pd.DataFrame(self.sent_test.average_sentence_len)], axis=1)
-                elif (command == 'capitalized_words'):
-                    new_features_train = pd.concat(
-                        [new_features_train, pd.DataFrame(self.cw_train.capitalized_words_freq)], axis=1)
-                    new_features_test = pd.concat(
-                        [new_features_test, pd.DataFrame(self.cw_test.capitalized_words_freq)], axis=1)
+                elif (command == Consts.CM_PC):
+                    new_features_train = pd.concat([new_features_train,
+                                                    pd.DataFrame(self.punc_train.punctuation_freq)],
+                                                   axis=1)
+                    new_features_test = pd.concat([new_features_test,
+                                                   pd.DataFrame(self.punc_test.punctuation_freq)],
+                                                  axis=1)
+                elif (command == Consts.CM_SL):
+                    new_features_train = pd.concat([new_features_train,
+                                                    pd.DataFrame(self.sent_train.average_word_len),
+                                                    pd.DataFrame(self.sent_train.average_sentence_len)],
+                                                   axis=1)
+                    new_features_test = pd.concat([new_features_test,
+                                                   pd.DataFrame(self.sent_test.average_word_len),
+                                                   pd.DataFrame(self.sent_test.average_sentence_len)],
+                                                  axis=1)
+                elif (command == Consts.CM_CW):
+                    new_features_train = pd.concat([new_features_train,
+                                                    pd.DataFrame(self.cw_train.capitalized_words_freq)],
+                                                   axis=1)
+                    new_features_test = pd.concat([new_features_test,
+                                                   pd.DataFrame(self.cw_test.capitalized_words_freq)],
+                                                  axis=1)
                 else:
                     print("Unkown command: ", command)
 
@@ -108,13 +123,14 @@ class FeatureWrapper:
                 clf.fit(new_features_train, y_train)
             else:
                 print("Define Logistic Regression model")
-                clf = LogisticRegression(random_state=0, max_iter=500).fit(new_features_train, y_train)
+                clf = LogisticRegression(random_state=Consts.LR_RANDOM_STATE,
+                                         max_iter=Consts.LR_MAX_ITER).fit(new_features_train, y_train)
 
             if (saveModelPath is not None):
                 dump(clf, saveModelPath + '/' + title_string + '.joblib')
 
             print("Begin cross val")
-            scores = cross_val_score(clf, new_features_train, y_train, cv=5)
+            scores = cross_val_score(clf, new_features_train, y_train, cv=Consts.CV_FOLDS)
             print(scores)
             print("Begin predict")
             acc_score = clf.score(new_features_test, y_test)
@@ -132,43 +148,67 @@ class FeatureWrapper:
                 f.write(out_string)
 
 
-    def ScoreText(self, input_text, commands, saveModelPath, transformModelPath, pcaModelPath):
+    def ScoreText(self, input_text, commands, modelPath, transformModelPath, pcaModelPath):
         df_data_text = pd.DataFrame([input_text], columns=['text'])
         new_features = None
         print("Begin ScoreText")
         commands_split = commands.split()
         for command in commands_split:
-            if (command == 'bow'):
+            if (command == Consts.CM_BOW):
                 bow = BagOfWords()
                 bow.transformText(df_data_text['text'], transformModelPath)
-                new_features = pd.concat([new_features, pd.DataFrame(bow.data_features)], axis=1)
-            elif (command == 'shallow_syntax'):
+                new_features = pd.concat([new_features,
+                                          pd.DataFrame(bow.data_features)],
+                                         axis=1)
+            elif (command == Consts.CM_SS):
                 ss = ShallowSyntax()
                 ss.transformText(df_data_text['text'], pcaModelPath)
-                new_features = pd.concat([new_features, pd.DataFrame(ss.shallow_syntax_features)], axis=1)
-            elif (command == 'misspelled_words'):
+                new_features = pd.concat([new_features,
+                                          pd.DataFrame(ss.shallow_syntax_features)],
+                                         axis=1)
+            elif (command == Consts.CM_MW):
                 ms = SpellCheck()
                 ms.transformData(df_data_text['text'])
-                new_features = pd.concat([new_features, pd.DataFrame(ms.misspelled_freq)], axis=1)
-            elif (command == 'punctation'):
+                new_features = pd.concat([new_features,
+                                          pd.DataFrame(ms.misspelled_freq)],
+                                         axis=1)
+            elif (command == Consts.CM_PC):
                 punc = Punctations()
                 punc.transformData(df_data_text['text'])
-                new_features = pd.concat([new_features, pd.DataFrame(punc.punctuation_freq)], axis=1)
-            elif (command == 'sentence'):
+                new_features = pd.concat([new_features,
+                                          pd.DataFrame(punc.punctuation_freq)],
+                                         axis=1)
+            elif (command == Consts.CM_SL):
                 sent = AverageLength()
                 sent.transformData(df_data_text['text'])
-                new_features = pd.concat([new_features, pd.DataFrame(sent.average_word_len), pd.DataFrame(sent.average_sentence_len)], axis=1)
-            elif (command == 'capitalized_words'):
+                new_features = pd.concat([new_features,
+                                          pd.DataFrame(sent.average_word_len),
+                                          pd.DataFrame(sent.average_sentence_len)],
+                                         axis=1)
+            elif (command == Consts.CM_CW):
                 cw = CapitalizedWords()
                 cw.transformData(df_data_text['text'])
-                new_features = pd.concat([new_features, pd.DataFrame(cw.capitalized_words_freq)], axis=1)
+                new_features = pd.concat([new_features,
+                                          pd.DataFrame(cw.capitalized_words_freq)],
+                                         axis=1)
             else:
                 print("Unkown command: ", command)
 
-        clf = load(saveModelPath + '/' + commands + '.joblib')
+        clf = load(modelPath + '/' + commands + '.joblib')
         predicted = clf.predict(new_features)
         print("Predicted: " + str(predicted[0]))
         return predicted
     def DebugModel(self, transformModelPath):
         bow = BagOfWords()
         bow.debugGenerator(transformModelPath)
+    def ScoreModelTest(self, data_train, commands, saveModelPath, transformModelPath):
+        X_train = data_train['text']
+        y_train = data_train['type']
+        new_features = None
+        bow = BagOfWords()
+        bow.transformText(X_train, transformModelPath)
+        new_features = pd.concat([new_features, pd.DataFrame(bow.data_features)], axis=1)
+        clf = load(saveModelPath + '/' + commands + '.joblib')
+        acc_score = clf.score(new_features, y_train)
+        score_string = "acc_test {d:.3f}:".format(d=acc_score) + "\n"
+        print(score_string)
